@@ -21,10 +21,6 @@ def clean_data():
     
     tmp = os.path.join( data_dir, "pageviews.csv" )
     tmp2 = os.path.join( data_dir, "cleaned.csv" )
-
-    if os.path.exists( tmp2 ):
-        os.remove( tmp2 )
-        print(f"File { tmp2 } has been deleted.")
     
     df = pd.read_csv( tmp )
 
