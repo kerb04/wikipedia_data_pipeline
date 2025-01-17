@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import snowflake.connector
+from decouple import config
 
 sql_datatypes = {
     'object': 'VARCHAR',
@@ -26,16 +27,18 @@ def connect_to_snowflake():
 
         return column_metadata
     
-    # con = snowflake.connector.connect(
-    #     user='XXXX',
-    #     password='XXXX',
-    #     account='XXXX',
-    #     session_parameters={
-    #         'QUERY_TAG': 'EndOfMonthFinancials',
-    #     }
-    # )
+    con = snowflake.connector.connect(
+        user=config('USER'),
+        account=config('ACCOUNT'),
+        password=config('PASSWORD'),
+        warehouse='COMPUTE_WH',
+        database='WIKIPEDIA_TRAFFIC_DATA',
+        schema='WIKI_SCHEMA'
+    )
 
-    column_metadata = get_column_metadata(df)
-    print( column_metadata )
+    # column_metadata = get_column_metadata(df)
+    # print( column_metadata )
+
+    con.close()
 
 connect_to_snowflake()
