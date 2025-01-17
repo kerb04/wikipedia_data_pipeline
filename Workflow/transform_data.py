@@ -14,9 +14,14 @@ def transform_data():
     prev_day = df[['date', 'article', 'rank']]
     prev_day = prev_day.rename(columns={'date': 'prev_date', 'rank': 'prev_rank'})
     df = df.merge(prev_day, on=['prev_date', 'article'], how='left')
-    df['change_in_rank'] = df['rank'] - df['prev_rank']
+    df['change_in_rank'] = df['prev_rank'] - df['rank']
     df['new_entry_flag'] = df['prev_rank'].isna()
     df = df.drop(columns=['prev_date'])
+
+    df.columns = df.columns.str.upper()
+
+    # df["DATE"] = df["DATE"].dt.tz_localize('UTC')
+    
 
     df.to_csv( tmp3, index=False )
 
