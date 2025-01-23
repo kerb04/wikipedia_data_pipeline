@@ -4,6 +4,7 @@ import pandas as pd
 import snowflake.connector
 from snowflake.connector.pandas_tools import write_pandas
 
+# Map from python datatypes to SQL datatypes
 sql_datatypes = {
     'object': 'NVARCHAR',
     'int64': 'INT',
@@ -12,13 +13,11 @@ sql_datatypes = {
     'datetime64[ns]': 'DATE'
 }
 
-def connect_to_snowflake():
-
+def send_to_snowflake():
     data_dir = os.path.abspath( os.path.join( os.path.dirname(os.path.abspath(__file__)), '..', 'Data') )
+    transformed_data = os.path.join( data_dir, "transformed.csv" )
     
-    tmp3 = os.path.join( data_dir, "transformed.csv" )
-    
-    df = pd.read_csv( tmp3, parse_dates=[3] )
+    df = pd.read_csv( transformed_data, parse_dates=[3] )
     df['DATE'] = df['DATE'].dt.date
     
     table_name = "wiki_daily_traffic"
@@ -31,8 +30,6 @@ def connect_to_snowflake():
         column_metadata = ", ".join([f"{name} {datatype}" for name, datatype in column_metadata])
         return column_metadata
     
-    table_metadata = get_column_metadata(df)
-
     con = snowflake.connector.connect(
         user=config('USER'),
         account=config('ACCOUNT'),
@@ -41,16 +38,9 @@ def connect_to_snowflake():
         database='WIKIPEDIA_TRAFFIC_DATA',
         schema='WIKI_SCHEMA'
     )
+
+    column_metadata = get_column_metadata(df)
     
-    con.cursor().execute(f"CREATE OR REPLACE TABLE {table_name} ({table_metadata})")
+    con.cursor().execute(f"CREATE OR REPLACE TABLE {table_name} ({column_metadata})")
     write_pandas(con, df, table_name.upper(), use_logical_type=True)
-    con.close()
-
-
-    print( table_metadata )
-    print(df['DATE'].head())
-    print(df['DATE'].dtype)
-
-    
-
-connect_to_snowflake()
+    con.close()    

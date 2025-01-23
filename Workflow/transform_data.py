@@ -1,28 +1,29 @@
 import os
 import pandas as pd
 
+def add_previous_rank(df):
+    df['DATE'] = pd.to_datetime(df['DATE'])
+    df['PREV_DATE'] = df['DATE'] - pd.Timedelta(days=1)
+
+    # Create temporary datframe to look up past article rankings
+    prev_day = df[['DATE', 'ARTICLE', 'RANK']]
+    prev_day = prev_day.rename(columns={'DATE': 'PREV_DATE', 'RANK': 'PREV_RANK'})
+
+    df = df.merge(prev_day, on=['PREV_DATE', 'ARTICLE'], how='left')
+    df = df.drop(columns=['PREV_DATE'])
+    
+    return df
+
 def transform_data():
     data_dir = os.path.abspath( os.path.join( os.path.dirname(os.path.abspath(__file__)), '..', 'Data') )
     
-    tmp2 = os.path.join( data_dir, "cleaned.csv" )
-    tmp3 = os.path.join( data_dir, "transformed.csv" )
+    clean_data = os.path.join( data_dir, "cleaned.csv" )
+    transformed_data = os.path.join( data_dir, "transformed.csv" )
     
-    df = pd.read_csv( tmp2 )
+    df = pd.read_csv( clean_data )
 
-    df['date'] = pd.to_datetime(df['date'])
-    df['prev_date'] = df['date'] - pd.Timedelta(days=1)
-    prev_day = df[['date', 'article', 'rank']]
-    prev_day = prev_day.rename(columns={'date': 'prev_date', 'rank': 'prev_rank'})
-    df = df.merge(prev_day, on=['prev_date', 'article'], how='left')
-    df['change_in_rank'] = df['prev_rank'] - df['rank']
-    df['new_entry_flag'] = df['prev_rank'].isna()
-    df = df.drop(columns=['prev_date'])
+    df = add_previous_rank( df )
+    df['CHANGE_IN_RANK'] = df['PREV_RANK'] - df['RANK']
+    df['NEW_ENTRY_FLAG'] = df['PREV_RANK'].isna()
 
-    df.columns = df.columns.str.upper()
-
-    # df["DATE"] = df["DATE"].dt.tz_localize('UTC')
-    
-
-    df.to_csv( tmp3, index=False )
-
-transform_data()
+    df.to_csv( transformed_data, index=False )
